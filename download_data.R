@@ -9,8 +9,8 @@ require("quantmod")
 symbols <- read.csv("djia_20131119.csv", header = FALSE, stringsAsFactors = FALSE)
 stocks <- symbols[,1]
 
-date_begin <- as.Date("2013-01-01")
-date_end <- as.Date("2013-11-18")
+date_begin <- as.Date("2012-01-01")
+date_end <- as.Date("2013-11-30")
 
 tickers <- getSymbols(stocks, from = date_begin, to = date_end)
 
@@ -29,4 +29,4 @@ data_omit <- na.omit(dataset)  # omit values with NA values
 # data_spline <- na.spline(dataset)  # cubic spline interpolation
 
 # save data as RData
-save(dataset, file = "djia_20130101_20131118.rda")
+save(dataset, file = "djia_20120101_20131130.rda")
