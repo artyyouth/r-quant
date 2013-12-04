@@ -4,7 +4,7 @@ library(timeDate)
 library(fUnitRoots)
 
 # load(file = "djia_20120101_20131130.rda")
-# load(file = "sp100_20131119.csv_2012-01-01_2013-11-30.rda")
+load(file = "sp100_20131119.csv_2012-01-01_2013-11-30.rda")
 # load(file = "russell2000_20120625.csv_2012-01-01_2013-11-30.rda")
 stocks <- names(dataset)
 nrStocks <- length(stocks)
@@ -148,6 +148,6 @@ for (pos in 1:length(rscore[,1])) {
   abline(h = (sprd_mean + sddist*sprd_sd), col = "red")
   
   #Sys.sleep(1)
-  readline()
+  cmd <- readline()
   if (cmd == 'c') break
 }
