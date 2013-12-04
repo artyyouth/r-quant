@@ -31,6 +31,7 @@ test_ds <- dataset[testDates,]
 
 # prepare variables
 ht <- matrix(data = NA, ncol = nrStocks, nrow = nrStocks)
+beta <- matrix(data = NA, ncol = nrStocks, nrow = nrStocks)
 p_ratio <- list()
 
 # here we go! let's find the cointegrated pairs
@@ -41,13 +42,21 @@ for (j in 1:(nrStocks-1)) {
     tmp_ds <- na.omit(cbind(learning_ds[,j], learning_ds[,i]))
     if (length(tmp_ds) == 0) 
     {
+      beta[j,i] <- NA
       ht[j, i] <- NA
       next
     }
 
+    # The lm function builds linear regression models using OLS.
+    # We build the linear model, m, forcing a zero intercept,
+    # then we extract the model's first regression coefficient.
+    #
+    m <- lm(learning_ds[, j] ~ learning_ds[, i] + 0)
+    beta[j,i] <- coef(m)[1]
+    
     # price i / price j
     # tmp_ds <- ind(tmp_ds)
-    p_ratio <- (tmp_ds[,2]/tmp_ds[,1])
+    p_ratio <- (tmp_ds[,2]/(tmp_ds[,1] * beta[j, i]))
     p_ratio[is.infinite(p_ratio)] <- NA
     p_ratio <- na.omit(p_ratio)
     
@@ -93,7 +102,7 @@ for (j in 1:(nrStocks-1)) {
       }
       # tmp_ds <- ind(tmp_ds)
       # price i / price j
-      p_ratio <- (tmp_ds[,2]/tmp_ds[,1])
+      p_ratio <- (tmp_ds[,2]/(tmp_ds[,1] * beta[j, i]))
       p_ratio[is.infinite(p_ratio)] <- NA
       p_ratio <- na.omit(p_ratio)
       
@@ -150,32 +159,32 @@ if (length(rscore[,1]) == 0) { stop("No good pair found!") }
 for (pos in 1:length(rscore[,1])) {
   j <- rscore[pos, 1]
   i <- rscore[pos, 2]
-  if (ht[j,i] > 0.01) { next }
+  # if (ht[j,i] > 0.01) { next }
   name_j <- stocks[j]
   name_i <- stocks[i]
   
-  tmp_ds <- na.omit(cbind(learning_ds[,j], learning_ds[,i]))
+  l_ds <- na.omit(cbind(learning_ds[,j], learning_ds[,i]))
   if (length(tmp_ds) == 0) 
   {
     next
   }
-  # tmp_ds <- ind(tmp_ds)
+  
   # price i / price j
-  l_pr <- (tmp_ds[,2]/tmp_ds[,1])
+  l_pr <- (l_ds[,2]/(l_ds[,1] * beta[j, i]))
   l_pr[is.infinite(l_pr)] <- NA
   l_pr <- na.omit(l_pr)
   
   l_ds_j <- tmp_ds[,1]
-  l_ds_i <- tmp_ds[,2]
+  l_ds_i <- tmp_ds[,2] * beta[j, i]
   
-  tmp_ds <- na.omit(cbind(test_ds[,j], test_ds[,i]))
+  t_ds <- na.omit(cbind(test_ds[,j], test_ds[,i]))
   if (length(tmp_ds) == 0)
   {
     next
   }
-  # tmp_ds <- ind(tmp_ds)
+  
   # price i / price j
-  t_pr <- (tmp_ds[,2]/tmp_ds[,1])
+  t_pr <- (t_ds[,2]/(t_ds[,1] * beta[j, i]))
   t_pr[is.infinite(t_pr)] <- NA
   t_pr <- na.omit(t_pr)
   
@@ -188,7 +197,7 @@ for (pos in 1:length(rscore[,1])) {
   par(mfrow=c(3,1))
   plot(l_ds_j, type = "l", main = "")
   lines(l_ds_j, col="blue")
-  title(main = paste(name_j, "&", name_i, "(", j, "-", i, ")"))
+  title(main = paste(name_j, "&", name_i))
   points(l_ds_i, type = "l", col = "red")
   
   plot(l_pr, ylim = c(lb, ub))

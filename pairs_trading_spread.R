@@ -3,8 +3,8 @@ library(tseries)
 library(timeDate)
 library(fUnitRoots)
 
-# load(file = "djia_20120101_20131130.rda")
-load(file = "sp100_20131119.csv_2012-01-01_2013-11-30.rda")
+load(file = "djia_20120101_20131130.rda")
+# load(file = "sp100_20131119.csv_2012-01-01_2013-11-30.rda")
 # load(file = "russell2000_20120625.csv_2012-01-01_2013-11-30.rda")
 stocks <- names(dataset)
 nrStocks <- length(stocks)
@@ -42,7 +42,7 @@ for (j in 1:(nrStocks-1)) {
     # then we extract the model's first regression coefficient.
     #
     m <- lm(learning_ds[, j] ~ learning_ds[, i] + 0)
-    beta[j,i] <- coef(m)[1]
+    beta[j,i] <- coef(m)[1] # beta or most fitted "price ratio"
     sprd <- resid(m)
     
     # The ht object contains the p-value from the ADF test.
@@ -122,6 +122,8 @@ if (length(rscore[,1]) == 0) { stop("No good pair found!") }
 for (pos in 1:length(rscore[,1])) {
   j <- rscore[pos, 1]
   i <- rscore[pos, 2]
+  name_j <- stocks[j]
+  name_i <- stocks[i]
   
   sprd <- na.omit(learning_ds[,j] - beta[j, i]*learning_ds[,i])
   sprdTest <- na.omit(test_ds[,j] - beta[j, i]*test_ds[,i])
@@ -136,8 +138,9 @@ for (pos in 1:length(rscore[,1])) {
   par(mfrow=c(3,1))
   plot(learning_ds[, j], type = "l", main = "")
   lines(learning_ds[, j], col="blue")
-  title(main = paste(stocks[rscore[pos, 1]], "&", stocks[rscore[pos, 2]]))
+  title(main = paste(name_j, "&", name_i, "(", j, "-", i, ")"))
   points(beta[j, i]*learning_ds[, i], type = "l", col = "red")
+  # points(learning_ds[, i], type = "l", col = "red")
   
   # plot spread in learning period
   plot(sprd, ylim = c(lb, ub))
