@@ -117,6 +117,8 @@ boundary <- 4.5
 
 cat("Found ", length(rscore[,1]), " good pairs!")
 
+if (length(rscore[,1]) == 0) { stop("No good pair found!") }
+
 for (pos in 1:length(rscore[,1])) {
   j <- rscore[pos, 1]
   i <- rscore[pos, 2]

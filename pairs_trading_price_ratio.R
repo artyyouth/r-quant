@@ -10,9 +10,9 @@ ind <- function(x) {
   x
 }
 
-# load(file = "djia_20120101_20131130.rda")
+load(file = "djia_20120101_20131130.rda")
 # load(file = "sp100_20131119.csv_2012-01-01_2013-11-30.rda")
-load(file = "russell2000_20120625.csv_2012-01-01_2013-11-30.rda")
+# load(file = "russell2000_20120625.csv_2012-01-01_2013-11-30.rda")
 stocks <- names(dataset)
 nrStocks <- length(stocks)
 
@@ -145,6 +145,8 @@ boundary <- 4.5
 
 cat("Found ", length(rscore[,1]), " good pairs!")
 
+if (length(rscore[,1]) == 0) { stop("No good pair found!") }
+  
 for (pos in 1:length(rscore[,1])) {
   j <- rscore[pos, 1]
   i <- rscore[pos, 2]
@@ -201,3 +203,4 @@ for (pos in 1:length(rscore[,1])) {
   cmd <- readline()
   if (cmd == 'c') break
 }
+
