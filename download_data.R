@@ -54,10 +54,10 @@ for (i in 2:length(tickers)) {
 	dataset <- merge(dataset, Ad(get(tickers[i])))
 }
 
-names(dataset) <- stocks
+names(dataset) <- tickers
 
 # handle NA values (four common alternatives)
-data_omit <- na.omit(dataset)  # omit values with NA values
+# data_omit <- na.omit(dataset)  # omit values with NA values
 # data_locf <- na.locf(dataset)  # last observation carried forward
 # data_approx <- na.approx(dataset)  # linear approximation
 # data_spline <- na.spline(dataset)  # cubic spline interpolation

@@ -38,26 +38,34 @@ for (j in 1:(nrStocks-1)) {
   for (i in (j+1):nrStocks) {
     
     cat("Calculating price ratio ", j, " - ", i, "\n")
-    if (length(na.omit(learning_ds[, i])) == 0 || length(na.omit(learning_ds[, j])) == 0) {
-      beta[j,i] <- NA
-      ht[j,i] <- NA
+    tmp_ds <- na.omit(cbind(learning_ds[,j], learning_ds[,i]))
+    if (length(tmp_ds) == 0) 
+    {
+      ht[j, i] <- NA
       next
     }
-    
-    tmp_ds <- na.omit(cbind(learning_ds[,j], learning_ds[,i]))
+
     # price i / price j
-    tmp_ds <- ind(tmp_ds)
-    p_ratio <- coredata(tmp_ds[,2]/tmp_ds[,1])
-    p_ratio[is.finite(p_ratio)] <- NA
+    # tmp_ds <- ind(tmp_ds)
+    p_ratio <- (tmp_ds[,2]/tmp_ds[,1])
+    p_ratio[is.infinite(p_ratio)] <- NA
     p_ratio <- na.omit(p_ratio)
     
     # The ht object contains the p-value from the ADF test.
     # The p-value is the probability that the spread is NOT
     # mean-reverting.  Hence, a small p-value means it is very
     # improbable that the spread is NOT mean-reverting
-    ht[j,i] <- adfTest(na.omit(coredata(p_ratio)), type="nc")@test$p.value
+    p <- try(adfTest(na.omit(coredata(p_ratio)), type="nc")@test$p.value)
+    if (isTRUE(class(p) == "try-error"))
+    {
+      ht[j, i] <- NA
+      next
+    }
+    ht[j, i] <- p
   }
 }
+
+# save(ht, file = paste0(ticker_file, "_", date_begin, "_", date_end, "_ADF.rda"))
 
 zscore <- 0;
 rscore <- matrix(data = NA, ncol = 5, nrow = (nrStocks^2)/2)
@@ -79,10 +87,14 @@ for (j in 1:(nrStocks-1)) {
     if (ht[j, i] < 0.02) {
       
       tmp_ds <- na.omit(cbind(learning_ds[,j], learning_ds[,i]))
-      tmp_ds <- ind(tmp_ds)
+      if (length(tmp_ds) == 0) 
+      {
+        next
+      }
+      # tmp_ds <- ind(tmp_ds)
       # price i / price j
-      p_ratio <- coredata(tmp_ds[,2]/tmp_ds[,1])
-      p_ratio[is.finite(p_ratio)] <- NA
+      p_ratio <- (tmp_ds[,2]/tmp_ds[,1])
+      p_ratio[is.infinite(p_ratio)] <- NA
       p_ratio <- na.omit(p_ratio)
       
       # calculate z-score
@@ -101,6 +113,10 @@ for (j in 1:(nrStocks-1)) {
   
   cat("Calculating ", j, "\n")
 }
+
+# save(ht, file = paste0(ticker_file, "_", date_begin, "_", date_end, "_ht.rda"))
+# save(rscore, file = paste0(ticker_file, "_", date_begin, "_", date_end, "_rscore.rda"))
+# save(pairSummary, file = paste0(ticker_file, "_", date_begin, "_", date_end, "_pairSummary.rda"))
 
 # clean up na rows
 rscore <- na.remove(rscore)
@@ -132,30 +148,56 @@ cat("Found ", length(rscore[,1]), " good pairs!")
 for (pos in 1:length(rscore[,1])) {
   j <- rscore[pos, 1]
   i <- rscore[pos, 2]
+  if (ht[j,i] > 0.01) { next }
+  name_j <- stocks[j]
+  name_i <- stocks[i]
   
-  sprd <- na.omit(learning_ds[,j] - beta[j, i]*learning_ds[,i])
-  sprdTest <- na.omit(test_ds[,j] - beta[j, i]*test_ds[,i])
+  tmp_ds <- na.omit(cbind(learning_ds[,j], learning_ds[,i]))
+  if (length(tmp_ds) == 0) 
+  {
+    next
+  }
+  # tmp_ds <- ind(tmp_ds)
+  # price i / price j
+  l_pr <- (tmp_ds[,2]/tmp_ds[,1])
+  l_pr[is.infinite(l_pr)] <- NA
+  l_pr <- na.omit(l_pr)
   
-  sprd_mean = mean(sprd, na.rm = T)
-  sprd_sd = sd(sprd, na.rm = T)
+  l_ds_j <- tmp_ds[,1]
+  l_ds_i <- tmp_ds[,2]
   
-  lb = sprd_mean - boundary*sprd_sd
-  ub = sprd_mean + boundary*sprd_sd
+  tmp_ds <- na.omit(cbind(test_ds[,j], test_ds[,i]))
+  if (length(tmp_ds) == 0)
+  {
+    next
+  }
+  # tmp_ds <- ind(tmp_ds)
+  # price i / price j
+  t_pr <- (tmp_ds[,2]/tmp_ds[,1])
+  t_pr[is.infinite(t_pr)] <- NA
+  t_pr <- na.omit(t_pr)
+  
+  pr_mean = mean(l_pr, na.rm = T)
+  pr_sd = sd(l_pr, na.rm = T)
+  
+  lb = pr_mean - boundary*pr_sd
+  ub = pr_mean + boundary*pr_sd
   
   par(mfrow=c(3,1))
-  plot(learning_ds[, j], type = "l", main = "")
-  lines(learning_ds[, j], col="blue")
-  title(main = paste(stocks[rscore[pos, 1]], "&", stocks[rscore[pos, 2]]))
-  points(beta[j, i]*learning_ds[, i], type = "l", col = "red")
+  plot(l_ds_j, type = "l", main = "")
+  lines(l_ds_j, col="blue")
+  title(main = paste(name_j, "&", name_i))
+  points(l_ds_i, type = "l", col = "red")
   
-  plot(sprd, ylim = c(lb, ub))
-  abline(h = (sprd_mean - sddist*sprd_sd), col = "red")
-  abline(h = (sprd_mean + sddist*sprd_sd), col = "red")
+  plot(l_pr, ylim = c(lb, ub))
+  abline(h = (pr_mean - sddist*pr_sd), col = "red")
+  abline(h = (pr_mean + sddist*pr_sd), col = "red")
   
-  plot(sprdTest, , ylim = c(lb, ub))
-  abline(h = (sprd_mean - sddist*sprd_sd), col = "red")
-  abline(h = (sprd_mean + sddist*sprd_sd), col = "red")
+  plot(t_pr, ylim = c(lb, ub))
+  abline(h = (pr_mean - sddist*pr_sd), col = "red")
+  abline(h = (pr_mean + sddist*pr_sd), col = "red")
   
   #Sys.sleep(1)
-  readline()
+  cmd <- readline()
+  if (cmd == 'c') break
 }
