@@ -3,22 +3,22 @@ library(tseries)
 library(timeDate)
 library(fUnitRoots)
 
-load(file = "djia_20120101_20131130.rda")
+# load(file = "djia_20120101_20131130.rda")
+load(file = "djia_20131119.csv_1992-01-01_2013-11-30.rda")
 # load(file = "sp100_20131119.csv_2012-01-01_2013-11-30.rda")
 # load(file = "russell2000_20120625.csv_2012-01-01_2013-11-30.rda")
 stocks <- names(dataset)
 nrStocks <- length(stocks)
 
 ht <- matrix(data = NA, ncol = nrStocks, nrow = nrStocks)
-beta <- matrix(data = NA, ncol = nrStocks, nrow = nrStocks)
 sprd <- list()
 
 ds_old <- dataset;
 nDays <- length(dataset[,1])
 
 # seting learning and testing periods
-testPeriod <- 63 # 252/4, a quarter
-learningPeriod <- 252 # a year
+testPeriod <- 252 # 252/4, a quarter
+learningPeriod <- (252 * 2) # a year
 
 testDates <- (nDays-testPeriod):nDays
 learningDates <- (nDays - testPeriod - learningPeriod):(nDays - testPeriod)
@@ -32,18 +32,11 @@ for (j in 1:(nrStocks-1)) {
     
     cat("Calculating ", j, " - ", i , "\n")
     if (length(na.omit(learning_ds[, i])) == 0 || length(na.omit(learning_ds[, j])) == 0) {
-      beta[j,i] <- NA
       ht[j,i] <- NA
       next
     }
     
-    # The lm function builds linear regression models using OLS.
-    # We build the linear model, m, forcing a zero intercept,
-    # then we extract the model's first regression coefficient.
-    #
-    m <- lm(learning_ds[, j] ~ learning_ds[, i] + 0)
-    beta[j,i] <- coef(m)[1] # beta or most fitted "price ratio"
-    sprd <- resid(m)
+    sprd <- learning_ds[, j] - learning_ds[, i]
     
     # The ht object contains the p-value from the ADF test.
     # The p-value is the probability that the spread is NOT
@@ -73,7 +66,7 @@ for (j in 1:(nrStocks-1)) {
     # p-value is the smaller the better
     if (ht[j, i] < 0.02) {
       
-      sprd <- learning_ds[,j] - beta[j, i]*learning_ds[,i]
+      sprd <- learning_ds[,j] - learning_ds[,i]
       sprd <- na.omit(sprd)
       
       # calculate z-score
@@ -92,14 +85,16 @@ for (j in 1:(nrStocks-1)) {
   cat("Calculating ", j, "\n")
 }
 
+# clean up na entries
+rscore <- na.remove(rscore)
+pairSummary <- na.remove(pairSummary)
+
+"
 # set up boundaries for 1st and 3rd quartiles
 badSprd_up <- 1
 badSprd_down <- -1
 
 # re-order spreads
-rscore <- na.remove(rscore)
-pairSummary <- na.remove(pairSummary)
-
 order_id <- order((rscore[,3]), decreasing = T)
 rscore <- rscore[order_id,]
 pairSummary <- pairSummary[order_id,]
@@ -111,6 +106,7 @@ backup <- rscore
 
 rscore <- rscore[goodSprd_id, ]
 pairSummary <- pairSummary[goodSprd_id, ]
+"
 
 sddist <- 2
 boundary <- 4.5
@@ -125,8 +121,8 @@ for (pos in 1:length(rscore[,1])) {
   name_j <- stocks[j]
   name_i <- stocks[i]
   
-  sprd <- na.omit(learning_ds[,j] - beta[j, i]*learning_ds[,i])
-  sprdTest <- na.omit(test_ds[,j] - beta[j, i]*test_ds[,i])
+  sprd <- na.omit(learning_ds[,j] - learning_ds[,i])
+  sprdTest <- na.omit(test_ds[,j] - test_ds[,i])
   
   sprd_mean = mean(sprd, na.rm = T)
   sprd_sd = sd(sprd, na.rm = T)
@@ -139,8 +135,7 @@ for (pos in 1:length(rscore[,1])) {
   plot(learning_ds[, j], type = "l", main = "")
   lines(learning_ds[, j], col="blue")
   title(main = paste(name_j, "&", name_i, "(", j, "-", i, ")"))
-  points(beta[j, i]*learning_ds[, i], type = "l", col = "red")
-  # points(learning_ds[, i], type = "l", col = "red")
+  points(learning_ds[, i], type = "l", col = "red")
   
   # plot spread in learning period
   plot(sprd, ylim = c(lb, ub))

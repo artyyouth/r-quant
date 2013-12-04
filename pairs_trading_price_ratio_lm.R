@@ -2,6 +2,7 @@ library(quantmod)
 library(tseries)
 library(timeDate)
 library(fUnitRoots)
+library(RcppArmadillo)
 
 ind <- function(x) {
   # Divide each column by the first non-NA value
@@ -10,7 +11,8 @@ ind <- function(x) {
   x
 }
 
-load(file = "djia_20120101_20131130.rda")
+# load(file = "djia_20120101_20131130.rda")
+load(file = "djia_20131119.csv_1992-01-01_2013-11-30.rda")
 # load(file = "sp100_20131119.csv_2012-01-01_2013-11-30.rda")
 # load(file = "russell2000_20120625.csv_2012-01-01_2013-11-30.rda")
 stocks <- names(dataset)
@@ -20,8 +22,8 @@ ds_old <- dataset;
 nDays <- length(dataset[,1])
 
 # seting learning and testing periods
-testPeriod <- 63 # 252/4, a quarter
-learningPeriod <- 252 # a year
+testPeriod <- 252 # 252/4, a quarter
+learningPeriod <- (252 * 2) # a year
 
 testDates <- (nDays-testPeriod):nDays
 learningDates <- (nDays - testPeriod - learningPeriod):(nDays - testPeriod)
@@ -51,7 +53,7 @@ for (j in 1:(nrStocks-1)) {
     # We build the linear model, m, forcing a zero intercept,
     # then we extract the model's first regression coefficient.
     #
-    m <- lm(learning_ds[, j] ~ learning_ds[, i] + 0)
+    m <- fastLm(learning_ds[, j] ~ learning_ds[, i] + 0)
     beta[j,i] <- coef(m)[1]
     
     # price i / price j
