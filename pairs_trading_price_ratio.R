@@ -10,18 +10,25 @@ ind <- function(x) {
   x
 }
 
-load(file = "djia_20120101_20131130.rda")
+# load(file = "djia_20120101_20131130.rda")
 # load(file = "sp100_20131119.csv_2012-01-01_2013-11-30.rda")
 # load(file = "russell2000_20120625.csv_2012-01-01_2013-11-30.rda")
+load(file = "sp100_20131119.csv_1992-01-01_2013-11-30.rda")
 stocks <- names(dataset)
 nrStocks <- length(stocks)
 
-ds_old <- dataset;
-nDays <- length(dataset[,1])
+t_horizon <- "2010-01-01/2013-11-30"
+
+ds_old <- dataset
 
 # seting learning and testing periods
 testPeriod <- 63 # 252/4, a quarter
 learningPeriod <- 252 # a year
+totalPeriod <- testPeriod + learningPeriod
+
+# subset the dataset
+dataset <- dataset[t_horizon]
+nDays <- length(dataset[,1])
 
 testDates <- (nDays-testPeriod):nDays
 learningDates <- (nDays - testPeriod - learningPeriod):(nDays - testPeriod)
@@ -93,7 +100,7 @@ for (j in 1:(nrStocks-1)) {
       }
       # tmp_ds <- ind(tmp_ds)
       # price i / price j
-      p_ratio <- (tmp_ds[,2]/tmp_ds[,1])
+      p_ratio <- (tmp_ds[,2]/tmp_ds[,1]) * 100
       p_ratio[is.infinite(p_ratio)] <- NA
       p_ratio <- na.omit(p_ratio)
       
@@ -150,7 +157,7 @@ if (length(rscore[,1]) == 0) { stop("No good pair found!") }
 for (pos in 1:length(rscore[,1])) {
   j <- rscore[pos, 1]
   i <- rscore[pos, 2]
-  if (ht[j,i] > 0.01) { next }
+  # if (ht[j,i] > 0.01) { next }
   name_j <- stocks[j]
   name_i <- stocks[i]
   
@@ -161,12 +168,12 @@ for (pos in 1:length(rscore[,1])) {
   }
   # tmp_ds <- ind(tmp_ds)
   # price i / price j
-  l_pr <- (tmp_ds[,2]/tmp_ds[,1])
+  l_pr <- (tmp_ds[,2]/tmp_ds[,1]) * 100
   l_pr[is.infinite(l_pr)] <- NA
   l_pr <- na.omit(l_pr)
   
-  l_ds_j <- tmp_ds[,1]
-  l_ds_i <- tmp_ds[,2]
+  l_ds_j <- ind(tmp_ds[,1])
+  l_ds_i <- ind(tmp_ds[,2])
   
   tmp_ds <- na.omit(cbind(test_ds[,j], test_ds[,i]))
   if (length(tmp_ds) == 0)
@@ -175,7 +182,7 @@ for (pos in 1:length(rscore[,1])) {
   }
   # tmp_ds <- ind(tmp_ds)
   # price i / price j
-  t_pr <- (tmp_ds[,2]/tmp_ds[,1])
+  t_pr <- (tmp_ds[,2]/tmp_ds[,1]) * 100
   t_pr[is.infinite(t_pr)] <- NA
   t_pr <- na.omit(t_pr)
   

@@ -5,8 +5,8 @@ library(fUnitRoots)
 library(RcppArmadillo)
 
 # load(file = "djia_20120101_20131130.rda")
-load(file = "djia_20131119.csv_1992-01-01_2013-11-30.rda")
-# load(file = "sp100_20131119.csv_2012-01-01_2013-11-30.rda")
+# load(file = "djia_20131119.csv_1992-01-01_2013-11-30.rda")
+load(file = "sp100_20131119.csv_1992-01-01_2013-11-30.rda")
 # load(file = "russell2000_20120625.csv_2012-01-01_2013-11-30.rda")
 stocks <- names(dataset)
 nrStocks <- length(stocks)
@@ -16,6 +16,9 @@ beta <- matrix(data = NA, ncol = nrStocks, nrow = nrStocks)
 sprd <- list()
 
 ds_old <- dataset;
+t_horizon <- "2010-01-01/2013-11-30"
+# subset the dataset
+dataset <- dataset[t_horizon]
 nDays <- length(dataset[,1])
 
 # seting learning and testing periods
@@ -44,7 +47,7 @@ for (j in 1:(nrStocks-1)) {
     # then we extract the model's first regression coefficient.
     #
     m <- fastLm(learning_ds[, j] ~ learning_ds[, i] + 0)
-    beta[j,i] <- coef(m)[1] # beta or most fitted "price ratio"
+    beta[j,i] <- coef(m)[1] # beta or most fitted "hedge ratio"
     sprd <- resid(m)
     
     # The ht object contains the p-value from the ADF test.
@@ -73,7 +76,7 @@ for (j in 1:(nrStocks-1)) {
     
     # is spread stationary (i.e. pair is co-integrated)
     # p-value is the smaller the better
-    if (ht[j, i] < 0.02) {
+    if (ht[j, i] < 0.011) {
       
       sprd <- learning_ds[,j] - beta[j, i]*learning_ds[,i]
       sprd <- na.omit(sprd)
@@ -137,10 +140,10 @@ for (pos in 1:length(rscore[,1])) {
   ub = sprd_mean + boundary*sprd_sd
   
   # plot price
-  par(mfrow=c(3,1))
+  par(mfrow=c(4,1))
   plot(learning_ds[, j], type = "l", main = "")
   lines(learning_ds[, j], col="blue")
-  title(main = paste(name_j, "&", name_i, "(", j, "-", i, ")"))
+  title(main = paste(name_j, "&", name_i, "(", j, "-", i, ") Learning"))
   points(beta[j, i]*learning_ds[, i], type = "l", col = "red")
   # points(learning_ds[, i], type = "l", col = "red")
   
@@ -148,6 +151,11 @@ for (pos in 1:length(rscore[,1])) {
   plot(sprd, ylim = c(lb, ub))
   abline(h = (sprd_mean - sddist*sprd_sd), col = "red")
   abline(h = (sprd_mean + sddist*sprd_sd), col = "red")
+  
+  plot(test_ds[, j], type = "l", main = "")
+  lines(test_ds[, j], col="blue")
+  title(main = paste(name_j, "&", name_i, "(", j, "-", i, ") Test"))
+  points(beta[j, i]*test_ds[, i], type = "l", col = "red")
   
   # plot spread in test period
   plot(sprdTest, ylim = c(lb, ub))
