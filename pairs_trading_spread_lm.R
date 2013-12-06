@@ -130,6 +130,9 @@ for (pos in 1:length(rscore[,1])) {
   name_j <- stocks[j]
   name_i <- stocks[i]
   
+  img_name <- paste0("~/SkyDrive/MBA/Investment/presentation/pairstrading/sprd_exp/sprd_", name_j, "_", name_i, "_", j, "_", i, ".png")
+  # png(img_name, width=900, height=1800, units="px", res=300)
+  
   sprd <- na.omit(learning_ds[,j] - beta[j, i]*learning_ds[,i])
   sprdTest <- na.omit(test_ds[,j] - beta[j, i]*test_ds[,i])
   
@@ -149,6 +152,9 @@ for (pos in 1:length(rscore[,1])) {
   
   # plot spread in learning period
   plot(sprd, ylim = c(lb, ub))
+  abline(h = sprd_mean, col = "green")
+  abline(h = (sprd_mean - sprd_sd), col = "brown")
+  abline(h = (sprd_mean + sprd_sd), col = "brown")
   abline(h = (sprd_mean - sddist*sprd_sd), col = "red")
   abline(h = (sprd_mean + sddist*sprd_sd), col = "red")
   
@@ -159,8 +165,14 @@ for (pos in 1:length(rscore[,1])) {
   
   # plot spread in test period
   plot(sprdTest, ylim = c(lb, ub))
+  abline(h = sprd_mean, col = "green")
+  abline(h = (sprd_mean - sprd_sd), col = "brown")
+  abline(h = (sprd_mean + sprd_sd), col = "brown")
   abline(h = (sprd_mean - sddist*sprd_sd), col = "red")
   abline(h = (sprd_mean + sddist*sprd_sd), col = "red")
+  
+  # dev.off()
+  cat(paste0(name_j, " & ", name_i, "\t(", j, " - ", i, " )\t", ht[j, i], "\n"))
   
   #Sys.sleep(1)
   cmd <- readline()

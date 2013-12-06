@@ -139,9 +139,10 @@ tailoredFrontierPlot(object=frontier)
 weightsPlot(frontier, col=rainbow(assets))
 
 # extended constraints: add upper investment limits
-constraints <- c(constraints, 'minW[1:assets]=0', 'maxW[1:assets]=0.5')
+constraints <- c('minW[1:assets]=0', 'maxW[1:assets]=0.5')
 portfolioConstraints(data_ts, spec, constraints)
 frontier <- portfolioFrontier(data_ts, spec, constraints)
+print(frontier)
 
 tailoredFrontierPlot(object=frontier)
 

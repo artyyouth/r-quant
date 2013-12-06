@@ -12,13 +12,18 @@ ind <- function(x) {
 }
 
 # load(file = "djia_20120101_20131130.rda")
-load(file = "djia_20131119.csv_1992-01-01_2013-11-30.rda")
+# load(file = "djia_20131119.csv_1992-01-01_2013-11-30.rda")
 # load(file = "sp100_20131119.csv_2012-01-01_2013-11-30.rda")
+load(file = "sp100_20131119.csv_1992-01-01_2013-11-30.rda")
 # load(file = "russell2000_20120625.csv_2012-01-01_2013-11-30.rda")
 stocks <- names(dataset)
 nrStocks <- length(stocks)
 
 ds_old <- dataset;
+ds_old <- dataset;
+t_horizon <- "2004-01-01/2008-01-01"
+# subset the dataset
+dataset <- dataset[t_horizon]
 nDays <- length(dataset[,1])
 
 # seting learning and testing periods
@@ -56,9 +61,9 @@ for (j in 1:(nrStocks-1)) {
     m <- fastLm(learning_ds[, j] ~ learning_ds[, i] + 0)
     beta[j,i] <- coef(m)[1]
     
-    # price i / price j
+    # price i * beta / price j
     # tmp_ds <- ind(tmp_ds)
-    p_ratio <- (tmp_ds[,2]/(tmp_ds[,1] * beta[j, i]))
+    p_ratio <- ((beta[j, i] * tmp_ds[,2])/tmp_ds[,1])
     p_ratio[is.infinite(p_ratio)] <- NA
     p_ratio <- na.omit(p_ratio)
     
@@ -103,8 +108,8 @@ for (j in 1:(nrStocks-1)) {
         next
       }
       # tmp_ds <- ind(tmp_ds)
-      # price i / price j
-      p_ratio <- (tmp_ds[,2]/(tmp_ds[,1] * beta[j, i]))
+      # price i * beta / price j
+      p_ratio <- ((beta[j, i] * tmp_ds[,2])/tmp_ds[,1])
       p_ratio[is.infinite(p_ratio)] <- NA
       p_ratio <- na.omit(p_ratio)
       
@@ -166,27 +171,27 @@ for (pos in 1:length(rscore[,1])) {
   name_i <- stocks[i]
   
   l_ds <- na.omit(cbind(learning_ds[,j], learning_ds[,i]))
-  if (length(tmp_ds) == 0) 
+  if (length(l_ds) == 0) 
   {
     next
   }
   
   # price i / price j
-  l_pr <- (l_ds[,2]/(l_ds[,1] * beta[j, i]))
+  l_pr <- ((l_ds[,2] * beta[j, i]) / l_ds[,1])
   l_pr[is.infinite(l_pr)] <- NA
   l_pr <- na.omit(l_pr)
   
-  l_ds_j <- tmp_ds[,1]
-  l_ds_i <- tmp_ds[,2] * beta[j, i]
+  l_ds_j <- l_ds[,1]
+  l_ds_i <- l_ds[,2] * beta[j, i]
   
   t_ds <- na.omit(cbind(test_ds[,j], test_ds[,i]))
-  if (length(tmp_ds) == 0)
+  if (length(t_ds) == 0)
   {
     next
   }
   
   # price i / price j
-  t_pr <- (t_ds[,2]/(t_ds[,1] * beta[j, i]))
+  t_pr <- ((t_ds[,2] * beta[j, i]) / t_ds[,1])
   t_pr[is.infinite(t_pr)] <- NA
   t_pr <- na.omit(t_pr)
   
