@@ -143,7 +143,7 @@ for (pos in 1:length(rscore[,1])) {
   ub = sprd_mean + boundary*sprd_sd
   
   # plot price
-  par(mfrow=c(4,1))
+  par(mfrow=c(6,1))
   plot(learning_ds[, j], type = "l", main = "")
   lines(learning_ds[, j], col="blue")
   title(main = paste(name_j, "&", name_i, "(", j, "-", i, ") Learning"))
@@ -170,6 +170,28 @@ for (pos in 1:length(rscore[,1])) {
   abline(h = (sprd_mean + sprd_sd), col = "brown")
   abline(h = (sprd_mean - sddist*sprd_sd), col = "red")
   abline(h = (sprd_mean + sddist*sprd_sd), col = "red")
+  
+  # plot with new mean, beta and sd
+  test_m <- fastLm(test_ds[, j] ~ test_ds[, i] + 0)
+  test_beta <- coef(test_m)[1] # beta or most fitted "hedge ratio"
+  test_sprd <- resid(test_m)
+  test_sprd_mean = mean(test_sprd, na.rm = T)
+  test_sprd_sd = sd(test_sprd, na.rm = T)
+  
+  plot(test_ds[, j], type = "l", main = "")
+  lines(test_ds[, j], col="blue")
+  title(main = paste(name_j, "&", name_i, "(", j, "-", i, ") Test Adjusted"))
+  points(test_beta*test_ds[, i], type = "l", col = "red")
+  
+  test_lb = test_sprd_mean - boundary*test_sprd_sd
+  test_ub = test_sprd_mean + boundary*test_sprd_sd
+  
+  plot(test_sprd, type="l", ylim = c(test_lb, test_ub))
+  abline(h = test_sprd_mean, col = "green")
+  abline(h = (test_sprd_mean - test_sprd_sd), col = "brown")
+  abline(h = (test_sprd_mean + test_sprd_sd), col = "brown")
+  abline(h = (test_sprd_mean - sddist*test_sprd_sd), col = "red")
+  abline(h = (test_sprd_mean + sddist*test_sprd_sd), col = "red")
   
   # dev.off()
   cat(paste0(name_j, " & ", name_i, "\t(", j, " - ", i, " )\t", ht[j, i], "\n"))
