@@ -54,9 +54,11 @@ for (j in 1:(nrStocks-1)) {
 
     # price i / price j
     # tmp_ds <- ind(tmp_ds)
+    # p_ratio <- (tmp_ds[,2]/tmp_ds[,1]) * 100
     p_ratio <- (tmp_ds[,2]/tmp_ds[,1])
     p_ratio[is.infinite(p_ratio)] <- NA
     p_ratio <- na.omit(p_ratio)
+    p_ratio <- log(p_ratio)
     
     # The ht object contains the p-value from the ADF test.
     # The p-value is the probability that the spread is NOT
@@ -100,9 +102,11 @@ for (j in 1:(nrStocks-1)) {
       }
       # tmp_ds <- ind(tmp_ds)
       # price i / price j
-      p_ratio <- (tmp_ds[,2]/tmp_ds[,1]) * 100
+      # p_ratio <- (tmp_ds[,2]/tmp_ds[,1]) * 100
+      p_ratio <- (tmp_ds[,2]/tmp_ds[,1])
       p_ratio[is.infinite(p_ratio)] <- NA
       p_ratio <- na.omit(p_ratio)
+      p_ratio <- log(p_ratio)
       
       # calculate z-score
       zscore <- sum(abs(scale(p_ratio)))/length(p_ratio)
@@ -168,9 +172,11 @@ for (pos in 1:length(rscore[,1])) {
   }
   # tmp_ds <- ind(tmp_ds)
   # price i / price j
-  l_pr <- (tmp_ds[,2]/tmp_ds[,1]) * 100
+  # l_pr <- (tmp_ds[,2]/tmp_ds[,1]) * 100
+  l_pr <- (tmp_ds[,2]/tmp_ds[,1])
   l_pr[is.infinite(l_pr)] <- NA
   l_pr <- na.omit(l_pr)
+  l_pr <- log(l_pr)
   
   l_ds_j <- ind(tmp_ds[,1])
   l_ds_i <- ind(tmp_ds[,2])
@@ -182,9 +188,11 @@ for (pos in 1:length(rscore[,1])) {
   }
   # tmp_ds <- ind(tmp_ds)
   # price i / price j
-  t_pr <- (tmp_ds[,2]/tmp_ds[,1]) * 100
+  # t_pr <- (tmp_ds[,2]/tmp_ds[,1]) * 100
+  t_pr <- (tmp_ds[,2]/tmp_ds[,1])
   t_pr[is.infinite(t_pr)] <- NA
   t_pr <- na.omit(t_pr)
+  t_pr <- log(t_pr)
   
   pr_mean = mean(l_pr, na.rm = T)
   pr_sd = sd(l_pr, na.rm = T)
