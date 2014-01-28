@@ -2,6 +2,12 @@ library("quantmod")
 library("fPortfolio")
 library("tseries")
 
+# for windows
+# setwd("c:\\workplace\\private\\r-quant\\")
+
+# for mac
+setwd("~/WorkPlace/quant/r-quant/applied_portfolio/")
+
 ind <- function(x) {
   # Divide each column by the first non-NA value
   # (There may already be a function to do that.)
@@ -50,25 +56,26 @@ calc_port_val <- function(ds, th, wt) {
   port
 }
 
+ticker_file = 'sp500_etf.csv'
+
 # data fetch range
-d_start <- "2008-11-30"
-d_end <- "2013-11-30"
+d_start <- "2009-01-01"
+d_end <- "2014-01-27"
 d_horizon <- paste0(d_start, "/", d_end)
 # data learning range
-l_start <- "2008-11-01"
-l_end <- "2010-11-01"
+l_start <- "2012-01-01"
+l_end <- "2014-01-27"
 l_horizon <- paste0(l_start, "/", l_end)
 # portfolio life range
-t_start <- "2010-11-01"
-t_end <- "2013-11-30"
+t_start <- "2012-01-03"
+t_end <- "2014-01-27"
 t_horizon <- paste0(t_start, "/", t_end)
 # portfolio initial value
-init_val <- 10000000 # 10 million
+init_val <- 1000000 # 1 million
 
 # Read portfolio defination file
-p_def <- read.csv('smallcap_port.csv',header=T)[-1]
-stocks <- as.character(p_def[,2])
-weights <- as.numeric(p_def[,1])
+p_def <- read.csv(ticker_file,header=T)[-1]
+stocks <- as.character(p_def[,1])
 n_stocks <- length(stocks)
 
 # Fetch data one time call (only useful for S&P500 or DJIA)
@@ -83,28 +90,9 @@ for (i in 2:length(tickers)) {
 
 names(dataset) <- stocks
 
-# save(dataset, file = "smallcap_port_2008-11-01_2013-11-30.rda")
-# load(file = "smallcap_port_2008-11-01_2013-11-30.rda")
-
-#====================== Raw portfolio performance ========================
-port <- calc_port_val(dataset, t_horizon, weights)
-
-# Plot the portfolio value over time
-# plot.xts(port$val/1e6,minor.ticks=F,main='Portfolio Value',ylab="$MM")
-
-# Portfolio write file
-write.zoo(port,file='port.csv',sep=',')
-
-# Compute the daily and weekly returns: note that the first obs is dropped
-nam <- names(port)
-p.wkly.rtn <- weeklyReturn(port[,1])[-1]
-names(p.wkly.rtn) <- nam[1]
-for(i in 2:ncol(port)) {
-  g <- weeklyReturn(port[,i])[-1]
-  names(g) <- nam[i]
-  p.wkly.rtn <- merge(p.wkly.rtn,g)
-}
-write.zoo(p.wkly.rtn,file='port.wkly.csv',sep=',')
+data_filename = paste0(ticker_file, "_", d_start, "_", d_end, ".rda")
+# save(dataset, file = data_filename)
+# load(file = data_filename)
 
 #============================ Create/Optimize the portfolio =======================
 # prepare the learning period data
@@ -163,6 +151,8 @@ portfolio <- round(portfolio, prec)
 
 # check portfolio again
 print(portfolio)
+named_weight <- cbind(stocks, portfolio)
+print(named_weight)
 
 pie_labels <- names(l_data)
 pie_labels[which(portfolio == 0)] <- NA
@@ -175,13 +165,12 @@ opt_port <- calc_port_val(dataset, t_horizon, portfolio)
 write.zoo(opt_port,file='opt_port.csv',sep=',')
 
 #============================ Plot with index ===============================
-benchmark <- getSymbols(c("^RUT"), from = t_start, to = t_end)
+benchmark <- getSymbols(c("SPY"), from = t_start, to = t_end)
 benchmark <- Ad(get(benchmark))
-pv <- port$val
-colnames(pv)[1] <- "Portfolio"
+
 optv <- opt_port$val
 colnames(optv)[1] <- "Optimized"
-x <- cbind(benchmark, pv, optv)
+x <- cbind(benchmark, optv)
 
 library(ggplot2)
 library(reshape2)
@@ -191,9 +180,7 @@ d <- melt(d, id.vars="date")
 ggplot(d, aes(date, value, color=variable)) + geom_line(size=2)
 
 # Calculate the yearly return
-cat("Pre-optimized portfolio return: \n")
-as.data.frame(periodReturn(port$val, 'yearly', subset="2011/"))
 cat("Benchmark return: \n")
-as.data.frame(periodReturn(benchmark, 'yearly', subset="2011/"))
+as.data.frame(periodReturn(benchmark, 'yearly', subset="2012/"))
 cat("Optimized portfolio return: \n")
-as.data.frame(periodReturn(opt_port$val, 'yearly', subset="2011/"))
+as.data.frame(periodReturn(opt_port$val, 'yearly', subset="2012/"))
