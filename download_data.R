@@ -10,8 +10,8 @@ require("quantmod")
 # ticker_file <- "sp100_20131119.csv"
 # ticker_file <- "russell2000_20120625.csv"
 ticker_file <- "sp500_20131119.csv"
-date_begin <- as.Date("1992-01-01")
-date_end <- as.Date("2013-11-30")
+date_begin <- as.Date("2010-01-01")
+date_end <- as.Date("2014-01-31")
 
 symbols <- read.csv(ticker_file, header = FALSE, stringsAsFactors = FALSE)
 stocks <- symbols[,1]
